@@ -1,4 +1,4 @@
-# Jira Clone
+# scrumtask-cli
 
 ## IMPORTANT NOTE
 
