@@ -1,6 +1,8 @@
+use std::fs;
+
 use anyhow::Result;
 
-use crate::models::{DBState, Epic, Story, Status};
+use crate::models::{DBState, Epic, Status, Story};
 
 trait Database {
     fn read_db(&self) -> Result<DBState>;
@@ -8,16 +10,19 @@ trait Database {
 }
 
 struct JSONFileDatabase {
-    pub file_path: String
+    pub file_path: String,
 }
 
 impl Database for JSONFileDatabase {
     fn read_db(&self) -> Result<DBState> {
-        todo!() // read the content's of self.file_path and deserialize it using serde
+        let contents = fs::read_to_string(&self.file_path)?;
+        let db: DBState = serde_json::from_str(&contents)?;
+        Ok(db)
     }
 
     fn write_db(&self, db_state: &DBState) -> Result<()> {
-        todo!() // serialize db_state to json and store it in self.file_path
+        let state = serde_json::to_vec_pretty(&db_state)?;
+        Ok(fs::write(&self.file_path, state)?)
     }
 }
 
@@ -33,7 +38,9 @@ mod tests {
 
         #[test]
         fn read_db_should_fail_with_invalid_path() {
-            let db = JSONFileDatabase { file_path: "INVALID_PATH".to_owned() };
+            let db = JSONFileDatabase {
+                file_path: "INVALID_PATH".to_owned(),
+            };
             assert_eq!(db.read_db().is_err(), true);
         }
 
@@ -44,8 +51,13 @@ mod tests {
             let file_contents = r#"{ "last_item_id": 0 epics: {} stories {} }"#;
             write!(tmpfile, "{}", file_contents).unwrap();
 
-            let db = JSONFileDatabase { file_path: tmpfile.path().to_str()
-                .expect("failed to convert tmpfile path to str").to_string() };
+            let db = JSONFileDatabase {
+                file_path: tmpfile
+                    .path()
+                    .to_str()
+                    .expect("failed to convert tmpfile path to str")
+                    .to_string(),
+            };
 
             let result = db.read_db();
 
@@ -59,8 +71,13 @@ mod tests {
             let file_contents = r#"{ "last_item_id": 0, "epics": {}, "stories": {} }"#;
             write!(tmpfile, "{}", file_contents).unwrap();
 
-            let db = JSONFileDatabase { file_path: tmpfile.path().to_str()
-                .expect("failed to convert tmpfile path to str").to_string() };
+            let db = JSONFileDatabase {
+                file_path: tmpfile
+                    .path()
+                    .to_str()
+                    .expect("failed to convert tmpfile path to str")
+                    .to_string(),
+            };
 
             let result = db.read_db();
 
@@ -74,11 +91,25 @@ mod tests {
             let file_contents = r#"{ "last_item_id": 0, "epics": {}, "stories": {} }"#;
             write!(tmpfile, "{}", file_contents).unwrap();
 
-            let db = JSONFileDatabase { file_path: tmpfile.path().to_str()
-                .expect("failed to convert tmpfile path to str").to_string() };
+            let db = JSONFileDatabase {
+                file_path: tmpfile
+                    .path()
+                    .to_str()
+                    .expect("failed to convert tmpfile path to str")
+                    .to_string(),
+            };
 
-            let story = Story { name: "epic 1".to_owned(), description: "epic 1".to_owned(), status: Status::Open };
-            let epic = Epic { name: "epic 1".to_owned(), description: "epic 1".to_owned(), status: Status::Open, stories: vec![2] };
+            let story = Story {
+                name: "epic 1".to_owned(),
+                description: "epic 1".to_owned(),
+                status: Status::Open,
+            };
+            let epic = Epic {
+                name: "epic 1".to_owned(),
+                description: "epic 1".to_owned(),
+                status: Status::Open,
+                stories: vec![2],
+            };
 
             let mut stories = HashMap::new();
             stories.insert(2, story);
@@ -86,7 +117,11 @@ mod tests {
             let mut epics = HashMap::new();
             epics.insert(1, epic);
 
-            let state = DBState { last_item_id: 2, epics, stories };
+            let state = DBState {
+                last_item_id: 2,
+                epics,
+                stories,
+            };
 
             let write_result = db.write_db(&state);
             let read_result = db.read_db().unwrap();
