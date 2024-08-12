@@ -38,7 +38,19 @@ impl Page for HomePage {
     }
 
     fn handle_input(&self, input: &str) -> Result<Option<Action>> {
-        todo!() // match against the user input and return the corresponding action. If the user input was invalid return None.
+        match input {
+            "c" => Ok(Some(Action::CreateEpic)),
+            "q" => Ok(Some(Action::Exit)),
+            _ => input.trim().parse().map_or_else(
+                |_| Ok(None),
+                |epic_id: u32| {
+                    self.db.read_db()?.epics.get(&epic_id).map_or_else(
+                        || Ok(None),
+                        |_| Ok(Some(Action::NavigateToEpicDetail { epic_id })),
+                    )
+                },
+            ),
+        }
     }
 }
 
@@ -87,7 +99,32 @@ impl Page for EpicDetail {
     }
 
     fn handle_input(&self, input: &str) -> Result<Option<Action>> {
-        todo!() // match against the user input and return the corresponding action. If the user input was invalid return None.
+        match input {
+            "p" => Ok(Some(Action::NavigateToPreviousPage)),
+            "u" => Ok(Some(Action::UpdateEpicStatus {
+                epic_id: self.epic_id,
+            })),
+            "d" => Ok(Some(Action::DeleteEpic {
+                epic_id: self.epic_id,
+            })),
+            "c" => Ok(Some(Action::CreateStory {
+                epic_id: self.epic_id,
+            })),
+            _ => input.trim().parse().map_or_else(
+                |_| Ok(None),
+                |story_id: u32| {
+                    self.db.read_db()?.stories.get(&story_id).map_or_else(
+                        || Ok(None),
+                        |_| {
+                            Ok(Some(Action::NavigateToStoryDetail {
+                                epic_id: self.epic_id,
+                                story_id,
+                            }))
+                        },
+                    )
+                },
+            ),
+        }
     }
 }
 
@@ -125,7 +162,17 @@ impl Page for StoryDetail {
     }
 
     fn handle_input(&self, input: &str) -> Result<Option<Action>> {
-        todo!() // match against the user input and return the corresponding action. If the user input was invalid return None.
+        match input {
+            "p" => Ok(Some(Action::NavigateToPreviousPage)),
+            "u" => Ok(Some(Action::UpdateStoryStatus {
+                story_id: self.story_id,
+            })),
+            "d" => Ok(Some(Action::DeleteStory {
+                epic_id: self.epic_id,
+                story_id: self.story_id,
+            })),
+            _ => Ok(None),
+        }
     }
 }
 
