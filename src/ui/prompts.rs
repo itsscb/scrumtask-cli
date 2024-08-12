@@ -46,7 +46,7 @@ fn create_story_prompt() -> Story {
 fn delete_epic_prompt() -> bool {
     static QUESTION: &str = "Are you sure you want to delete this epic? All stories in this epic will also be deleted [Y/n]:";
     println!("{DELIMITER}");
-    print!("{QUESTION}");
+    println!("{QUESTION}");
     let decision = matches!(get_user_input().as_str(), "y" | "Y");
     println!();
     decision
@@ -55,7 +55,7 @@ fn delete_epic_prompt() -> bool {
 fn delete_story_prompt() -> bool {
     static QUESTION: &str = "Are you sure you want to delete this story? [Y/n]:";
     println!("{DELIMITER}");
-    print!("{QUESTION}");
+    println!("{QUESTION}");
     let decision = matches!(get_user_input().as_str(), "y" | "Y");
     println!();
     decision
@@ -64,14 +64,12 @@ fn delete_story_prompt() -> bool {
 fn update_status_prompt() -> Option<Status> {
     static QUESTION: &str = "New Status (1 - OPEN, 2 - IN-PROGRESS, 3 - RESOLVED, 4 - CLOSED):";
     println!("{DELIMITER}");
-    print!("{QUESTION}");
-    let decision = match get_user_input().as_str() {
+    println!("{QUESTION}");
+    match get_user_input().as_str() {
         "1" => Some(Status::Open),
         "2" => Some(Status::InProgress),
         "3" => Some(Status::Resolved),
         "4" => Some(Status::Closed),
         _ => None,
-    };
-    println!();
-    decision
+    }
 }

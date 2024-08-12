@@ -1,4 +1,5 @@
-use std::fs;
+use std::fs::{self, OpenOptions};
+use std::path::Path;
 
 use anyhow::{anyhow, Result};
 
@@ -9,10 +10,23 @@ pub struct JiraDatabase {
 }
 
 impl JiraDatabase {
-    pub fn new(file_path: String) -> Self {
-        Self {
-            database: Box::new(JSONFileDatabase { file_path }),
+    pub fn new(file_path: &str) -> Result<Self> {
+        let path = file_path.to_owned();
+        let db = Self {
+            database: Box::new(JSONFileDatabase { file_path: path }),
+        };
+
+        if !Path::new(file_path).exists() {
+            match OpenOptions::new().create(true).write(true).open(file_path) {
+                Err(e) => return Err(anyhow!("failed to open/create database file: {e}")),
+                Ok(_) => {
+                    db.database.write_db(&DBState::new())?;
+                }
+            }
+            // .with_context(|| format!("failed to create epic"))?;
         }
+
+        Ok(db)
     }
 
     pub fn read_db(&self) -> Result<DBState> {
@@ -138,6 +152,7 @@ pub mod test_utils {
     }
 
     impl MockDB {
+        #[allow(dead_code)]
         pub fn new() -> Self {
             Self {
                 last_written_state: RefCell::new(DBState {

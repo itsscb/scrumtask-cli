@@ -1,3 +1,4 @@
+#[allow(unused_imports)]
 use anyhow::{anyhow, Context, Ok, Result};
 use std::rc::Rc;
 
@@ -45,7 +46,9 @@ impl Navigator {
             }
             Action::NavigateToPreviousPage => {
                 // remove the last page from the pages vector
-                let _ = self.pages.pop();
+                if !self.pages.is_empty() {
+                    self.pages.pop();
+                }
             }
             Action::CreateEpic => {
                 // prompt the user to create a new epic and persist it in the database
@@ -61,9 +64,12 @@ impl Navigator {
             }
             Action::DeleteEpic { epic_id } => {
                 // prompt the user to delete the epic and persist it in the database
-                self.db
-                    .delete_epic(epic_id)
-                    .with_context(|| format!("failed to delete epic: {epic_id}"))?;
+                if (self.prompts.delete_epic)() {
+                    self.db
+                        .delete_epic(epic_id)
+                        .with_context(|| format!("failed to delete epic: {epic_id}"))?;
+                    self.pages.pop();
+                }
             }
             Action::CreateStory { epic_id } => {
                 // prompt the user to create a new story and persist it in the database
@@ -73,9 +79,12 @@ impl Navigator {
             }
             Action::UpdateStoryStatus { story_id } => {
                 // prompt the user to update status and persist it in the database
-                let status = (self.prompts.update_status)()
-                    .with_context(|| format!("invalid status: {story_id}"))?;
-                self.db.update_story_status(story_id, status)?;
+                if let Some(status) = (self.prompts.update_status)() {
+                    let s = status.clone();
+                    self.db
+                        .update_story_status(story_id, status)
+                        .with_context(|| format!("invalid status: {s}"))?;
+                }
             }
             Action::DeleteStory { epic_id, story_id } => {
                 // prompt the user to delete the story and persist it in the database
@@ -83,6 +92,7 @@ impl Navigator {
                     self.db
                         .delete_story(epic_id, story_id)
                         .with_context(|| format!("failed to delete story: {story_id}"))?;
+                    self.pages.pop();
                 }
             }
             Action::Exit => {
@@ -95,11 +105,11 @@ impl Navigator {
     }
 
     // Private functions used for testing
-
+    #[allow(dead_code)]
     fn get_page_count(&self) -> usize {
         self.pages.len()
     }
-
+    #[allow(dead_code)]
     fn set_prompts(&mut self, prompts: Prompts) {
         self.prompts = prompts;
     }

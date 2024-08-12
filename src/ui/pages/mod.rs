@@ -14,6 +14,7 @@ use page_helpers::*;
 pub trait Page {
     fn draw_page(&self) -> Result<()>;
     fn handle_input(&self, input: &str) -> Result<Option<Action>>;
+    #[allow(dead_code)]
     fn as_any(&self) -> &dyn Any;
 }
 
@@ -31,11 +32,16 @@ impl Page for HomePage {
         println!("----------------------------- EPICS -----------------------------");
         println!("     id     |               name               |      status      ");
 
-        self.db.read_db()?.epics.iter().for_each(|(id, e)| {
-            print!("{}| ", get_column_string(format!("{id}").as_str(), 12));
-            print!("{}| ", get_column_string(&e.name, 33));
-            print!("{}", get_column_string(&e.status.to_string(), 17));
-        });
+        self.db
+            .read_db()?
+            .epics
+            .iter()
+            .sorted()
+            .for_each(|(id, e)| {
+                print!("{}| ", get_column_string(format!("{id}").as_str(), 12));
+                print!("{}| ", get_column_string(&e.name, 33));
+                print!("{}", get_column_string(&e.status.to_string(), 17));
+            });
 
         println!();
         println!();
@@ -95,7 +101,7 @@ impl Page for EpicDetail {
 
         let stories = &db_state.stories;
 
-        for (id, e) in stories {
+        for (id, e) in stories.iter().sorted() {
             print!("{}| ", get_column_string(format!("{id}").as_str(), 12));
             print!("{}| ", get_column_string(&e.name, 33));
             print!("{}", get_column_string(&e.status.to_string(), 17));
