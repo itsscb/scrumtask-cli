@@ -1,7 +1,29 @@
 use ellipse::Ellipse;
 
 pub fn get_column_string(text: &str, width: usize) -> String {
-    todo!() // use the truncate_ellipse function from the ellipse crate
+    match width {
+        0 => return String::new(),
+        1 => return ".".to_owned(),
+        2 => return "..".to_owned(),
+        3 => return "...".to_owned(),
+        _ => {}
+    }
+
+    let length = text.len();
+
+    if width == length {
+        return text.to_owned();
+    }
+
+    if width > length {
+        let diff = " ".repeat(width - length);
+        let mut out = text.to_owned();
+        out.push_str(&diff);
+
+        return out;
+    }
+
+    text.truncate_ellipse(width - 3).to_string()
 }
 
 #[cfg(test)]

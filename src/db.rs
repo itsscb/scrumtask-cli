@@ -5,7 +5,7 @@ use anyhow::{anyhow, Result};
 use crate::models::{DBState, Epic, Status, Story};
 
 pub struct JiraDatabase {
-    database: Box<dyn Database>,
+    pub(crate) database: Box<dyn Database>,
 }
 
 impl JiraDatabase {
