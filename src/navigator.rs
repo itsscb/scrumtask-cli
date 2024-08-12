@@ -16,7 +16,7 @@ pub struct Navigator {
 impl Navigator {
     pub fn new(db: Rc<JiraDatabase>) -> Self {
         Self {
-            pages: vec![],
+            pages: vec![Box::new(HomePage::new(Rc::clone(&db)))],
             prompts: Prompts::new(),
             db,
         }
@@ -49,28 +49,41 @@ impl Navigator {
             }
             Action::CreateEpic => {
                 // prompt the user to create a new epic and persist it in the database
-                self.db.create_epic((self.prompts.create_epic)());
+                self.db
+                    .create_epic((self.prompts.create_epic)())
+                    .with_context(|| format!("failed to create epic"))?;
             }
             Action::UpdateEpicStatus { epic_id } => {
-                todo!(); // prompt the user to update status and persist it in the database
-                         // let status = (self.prompts.update_status)().(|| {
-                         //     return Err(anyhow!("failed to update epic status")
-                         //         .context(format!("invalid status given")));
-                         // });
-                self.db
-                    .update_epic_status(epic_id, crate::models::Status::Open);
+                // prompt the user to update status and persist it in the database
+                let status = (self.prompts.update_status)()
+                    .with_context(|| format!("invalid status: {epic_id}"))?;
+                self.db.update_epic_status(epic_id, status)?;
             }
             Action::DeleteEpic { epic_id } => {
-                todo!() // prompt the user to delete the epic and persist it in the database
+                // prompt the user to delete the epic and persist it in the database
+                self.db
+                    .delete_epic(epic_id)
+                    .with_context(|| format!("failed to delete epic: {epic_id}"))?;
             }
             Action::CreateStory { epic_id } => {
-                todo!() // prompt the user to create a new story and persist it in the database
+                // prompt the user to create a new story and persist it in the database
+                self.db
+                    .create_story((self.prompts.create_story)(), epic_id)
+                    .with_context(|| format!("failed to create story: {epic_id}"))?;
             }
             Action::UpdateStoryStatus { story_id } => {
-                todo!() // prompt the user to update status and persist it in the database
+                // prompt the user to update status and persist it in the database
+                let status = (self.prompts.update_status)()
+                    .with_context(|| format!("invalid status: {story_id}"))?;
+                self.db.update_story_status(story_id, status)?;
             }
             Action::DeleteStory { epic_id, story_id } => {
-                todo!() // prompt the user to delete the story and persist it in the database
+                // prompt the user to delete the story and persist it in the database
+                if (self.prompts.delete_story)() {
+                    self.db
+                        .delete_story(epic_id, story_id)
+                        .with_context(|| format!("failed to delete story: {story_id}"))?;
+                }
             }
             Action::Exit => {
                 // remove all pages from the pages vector

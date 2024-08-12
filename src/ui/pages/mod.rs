@@ -20,6 +20,12 @@ pub trait Page {
 pub struct HomePage {
     pub db: Rc<JiraDatabase>,
 }
+
+impl HomePage {
+    pub fn new(db: Rc<JiraDatabase>) -> Self {
+        Self { db }
+    }
+}
 impl Page for HomePage {
     fn draw_page(&self) -> Result<()> {
         println!("----------------------------- EPICS -----------------------------");
